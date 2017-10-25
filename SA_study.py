@@ -62,9 +62,9 @@ parm=(param_values+1)*6.3e10
 FEM_freq = uncertainty_analysis.uncertainty_analysis.random_freq_run(analysis=analysis1, parm=parm, target='E',index=index)
 Y=FEM_freq[:,1]
 
-g = sns.PairGrid(pd.DataFrame(FEM_freq[:,:5]))
-g = g.map_diag(plt.hist)
-g = g.map_offdiag(plt.scatter)
+#g = sns.PairGrid(pd.DataFrame(FEM_freq[:,:5]))
+#g = g.map_diag(plt.hist)
+#g = g.map_offdiag(plt.scatter)
 #Y = FEM_freq[:, 0]
 #
 ## Perform analysis
