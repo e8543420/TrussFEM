@@ -17,7 +17,9 @@ import uncertainty_analysis
 
 from SALib.sample import saltelli
 from SALib.analyze import sobol
-from SALib.test_functions import Ishigami
+
+from sklearn.decomposition import PCA
+
 
 mesh = FE_model.mesh()
 properties = FE_model.properties(mesh)
@@ -60,15 +62,57 @@ parm=(param_values+1)*6.3e10
 
 ## Run model (example)
 FEM_freq = uncertainty_analysis.uncertainty_analysis.random_freq_run(analysis=analysis1, parm=parm, target='E',index=index)
-Y=FEM_freq[:,1]
 
+## Statistical model
+
+## Single frequency
+#Y=FEM_freq[:,0]
+
+## Least square
+mean_test_freq=np.mean(FEM_freq,axis=0)
+Y=np.zeros(FEM_freq[:,0].shape)
+for i in range(0,20):
+    Y+=((FEM_freq[:,i]-mean_test_freq[i])/mean_test_freq[i])**2
+Y=np.sqrt(Y)
+
+## PCA projection
+#pca = PCA(n_components=1)
+#Y = pca.fit(FEM_freq).transform(FEM_freq)
+#Y = Y[:,0]
+
+#Y=FEM_freq[:,1]
+
+## Draw the scatter of Frequencies
 #g = sns.PairGrid(pd.DataFrame(FEM_freq[:,:5]))
 #g = g.map_diag(plt.hist)
 #g = g.map_offdiag(plt.scatter)
-#Y = FEM_freq[:, 0]
 #
 ## Perform analysis
-Si = sobol.analyze(problem, Y, print_to_console=True)
+Si = sobol.analyze(problem, Y, print_to_console=False)
+
+
+# Plot the figure 
+f1,(ax1,ax2)=plt.subplots(2,1,sharex=True)
+sns.barplot(np.arange(1,22),Si['S1'],ax=ax1)
+sns.barplot(np.arange(1,22),Si['S1_conf'],ax=ax2)
+ax1.set_title('S1')
+ax2.set_title('S1_conf')
+ax2.set_xlabel('Parameter index')
+
+f2,(ax3,ax4)=plt.subplots(2,1,sharex=True)
+sns.barplot(np.arange(1,22),Si['ST'],ax=ax3)
+sns.barplot(np.arange(1,22),Si['ST_conf'],ax=ax4)
+ax3.set_title('ST')
+ax4.set_title('ST_conf')
+ax4.set_xlabel('Parameter index')
+
+f3=plt.figure()
+ax5=f3.add_axes()
+g_S2=sns.heatmap(Si['S2'],ax=ax5,xticklabels=np.arange(1,22), yticklabels=np.arange(1,22))
+g_S2.set_title('Second order sensitivity')
+g_S2.set_xlabel('Parameter index')
+g_S2.set_ylabel('Parameter index')
+
 
 # Print the first-order sensitivity indices
 #print(Si['S1'])
