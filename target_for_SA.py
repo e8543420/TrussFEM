@@ -4,46 +4,31 @@ Created on Wed Oct 25 16:38:39 2017
 
 @author: zhaox
 """
-
-print(__doc__)
-
+from scipy.stats import multivariate_normal
+import numpy as np
 import matplotlib.pyplot as plt
 
-from sklearn import datasets
-from sklearn.decomposition import PCA
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+import seaborn as sns
+import pandas as pd
 
-iris = datasets.load_iris()
+test_freq = np.loadtxt(open('test_freq.csv', 'rb'), delimiter=',', skiprows=0)
 
-X = iris.data
-y = iris.target
-target_names = iris.target_names
+mean_test=np.mean(test_freq,axis=0)
+cov_test=np.cov(test_freq,rowvar=False)
 
-pca = PCA(n_components=2)
-X_r = pca.fit(X).transform(X)
+#x, y = np.mgrid[0.7*mean_test[0]:1.3*mean_test[0]:10j, 0.7*mean_test[1]:1.3*mean_test[1]:10j]
+#pos = np.dstack((x, y))
+#x=test_freq[:,0]
+#y=test_freq[:,1]
+#pos=test_freq
 
-lda = LinearDiscriminantAnalysis(n_components=2)
-X_r2 = lda.fit(X, y).transform(X)
+rv = multivariate_normal(mean_test, cov_test)
+#fig2 = plt.figure()
+#ax2 = fig2.add_subplot(111)
+#ax2.contourf(x, y, rv.pdf(pos))
+prop=rv.pdf(test_freq)
 
-# Percentage of variance explained for each components
-print('explained variance ratio (first two components): %s'
-      % str(pca.explained_variance_ratio_))
-
-plt.figure()
-colors = ['navy', 'turquoise', 'darkorange']
-lw = 2
-
-for color, i, target_name in zip(colors, [0, 1, 2], target_names):
-    plt.scatter(X_r[y == i, 0], X_r[y == i, 1], color=color, alpha=.8, lw=lw,
-                label=target_name)
-plt.legend(loc='best', shadow=False, scatterpoints=1)
-plt.title('PCA of IRIS dataset')
-
-plt.figure()
-for color, i, target_name in zip(colors, [0, 1, 2], target_names):
-    plt.scatter(X_r2[y == i, 0], X_r2[y == i, 1], alpha=.8, color=color,
-                label=target_name)
-plt.legend(loc='best', shadow=False, scatterpoints=1)
-plt.title('LDA of IRIS dataset')
-
-plt.show()
+#g=sns.PairGrid(pd.DataFrame(test_freq))
+#g.map_lower(sns.kdeplot, cmap="Blues_d")
+#g.map_upper(plt.scatter)
+#g.map_diag(sns.kdeplot, lw=3)

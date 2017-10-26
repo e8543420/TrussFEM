@@ -20,6 +20,8 @@ from SALib.analyze import sobol
 
 from sklearn.decomposition import PCA
 
+from scipy.stats import multivariate_normal
+
 
 mesh = FE_model.mesh()
 properties = FE_model.properties(mesh)
@@ -34,6 +36,9 @@ analysis1.run()
 # analysis1.plot(mode=11,sf=1.1)
 
 # uncertainty_analysis.uncertainty_analysis.plot_with_ellipse(test_freq[:,[0,2]])
+#parm=uncertainty_analysis.uncertainty_analysis.random_parm_generator(mean=np.ones(5)*7e10,std=np.ones(5)*6.3e10*0.17,length=1000)
+#random_freq=uncertainty_analysis.uncertainty_analysis.random_freq_run(analysis1,parm,target='E',index=list(np.array([3,7,11,5,19])-1))
+
 
 test_freq = np.loadtxt(open('test_freq.csv', 'rb'), delimiter=',', skiprows=0)
 
@@ -57,8 +62,8 @@ problem = {
 }
 
 ## Generate samples
-param_values = saltelli.sample(problem, 100)
-parm=(param_values+1)*6.3e10
+param_values = saltelli.sample(problem, 1000)
+parm=(param_values+1)*7e10
 
 ## Run model (example)
 FEM_freq = uncertainty_analysis.uncertainty_analysis.random_freq_run(analysis=analysis1, parm=parm, target='E',index=index)
@@ -69,18 +74,31 @@ FEM_freq = uncertainty_analysis.uncertainty_analysis.random_freq_run(analysis=an
 #Y=FEM_freq[:,0]
 
 ## Least square
-mean_test_freq=np.mean(FEM_freq,axis=0)
-Y=np.zeros(FEM_freq[:,0].shape)
-for i in range(0,20):
-    Y+=((FEM_freq[:,i]-mean_test_freq[i])/mean_test_freq[i])**2
-Y=np.sqrt(Y)
+#mean_test_freq=np.mean(FEM_freq,axis=0)
+#Y=np.zeros(FEM_freq[:,0].shape)
+#for i in range(0,20):
+#    Y+=((FEM_freq[:,i]-mean_test_freq[i])/mean_test_freq[i])**2
+#Y=np.sqrt(Y)
 
 ## PCA projection
 #pca = PCA(n_components=1)
 #Y = pca.fit(FEM_freq).transform(FEM_freq)
 #Y = Y[:,0]
 
-#Y=FEM_freq[:,1]
+## Propebility
+mean_test=np.mean(test_freq,axis=0)
+cov_test=np.cov(test_freq,rowvar=False)
+mean_FEM=np.mean(FEM_freq,axis=0)
+
+test_freq_uncentered=np.zeros(test_freq.shape)
+FEM_freq_uncentered=np.zeros(FEM_freq.shape)
+for i in range(0,20):
+    test_freq_uncentered[:,i]=test_freq[:,i]-mean_test[i]
+    FEM_freq_uncentered[:,i]=FEM_freq[:,i]-mean_FEM[i]
+    
+rv = multivariate_normal(mean_test-mean_test, cov_test)
+Y = rv.pdf(FEM_freq_uncentered)
+
 
 ## Draw the scatter of Frequencies
 #g = sns.PairGrid(pd.DataFrame(FEM_freq[:,:5]))
