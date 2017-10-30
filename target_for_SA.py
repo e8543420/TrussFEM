@@ -13,8 +13,15 @@ import pandas as pd
 
 test_freq = np.loadtxt(open('test_freq.csv', 'rb'), delimiter=',', skiprows=0)
 
+
 mean_test=np.mean(test_freq,axis=0)
 cov_test=np.cov(test_freq,rowvar=False)
+test_freq_normalized=np.zeros(test_freq.shape)
+for i in range(0,20):
+    test_freq_normalized[:,i]=(test_freq[:,i]-mean_test[i])/cov_test[i,i]
+
+mean_test_normalized=np.mean(test_freq_normalized,axis=0)
+cov_test_normalized=np.cov(test_freq_normalized,rowvar=False)
 
 #x, y = np.mgrid[0.7*mean_test[0]:1.3*mean_test[0]:10j, 0.7*mean_test[1]:1.3*mean_test[1]:10j]
 #pos = np.dstack((x, y))
@@ -22,11 +29,11 @@ cov_test=np.cov(test_freq,rowvar=False)
 #y=test_freq[:,1]
 #pos=test_freq
 
-rv = multivariate_normal(mean_test, cov_test)
+prop = multivariate_normal.pdf(test_freq_normalized,mean_test_normalized, cov_test_normalized)
 #fig2 = plt.figure()
 #ax2 = fig2.add_subplot(111)
 #ax2.contourf(x, y, rv.pdf(pos))
-prop=rv.pdf(test_freq)
+#prop=rv.pdf(test_freq)
 
 #g=sns.PairGrid(pd.DataFrame(test_freq))
 #g.map_lower(sns.kdeplot, cmap="Blues_d")
