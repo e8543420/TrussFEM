@@ -101,7 +101,7 @@ class uncertainty_analysis:
     def random_parm_generator(mean,std,length):
         parm=np.zeros((length,len(mean)))
         for i in range(0,len(mean)):
-            parm[:,i]=uncertainty_analysis.random_series_generator(length=length,mu=mean[i],sigma=std[i],seed=i*datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
+            parm[:,i]=uncertainty_analysis.random_series_generator(length=length,mu=mean[i],sigma=std[i],seed=(i+1)*datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
         return parm
     
     def random_freq_run(analysis,parm,target,index):

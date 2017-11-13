@@ -14,7 +14,6 @@ import FE_model
 import FE_analysis
 import uncertainty_analysis
 
-
 from SALib.sample import saltelli
 from SALib.analyze import sobol
 from SALib.analyze import delta
@@ -30,6 +29,7 @@ from SALib.sample.morris import sample as morris_sample
 from sklearn.decomposition import PCA
 
 from scipy.stats import multivariate_normal
+from scipy import stats
 
 # Method used
 # 1:Sobol
@@ -39,7 +39,7 @@ from scipy.stats import multivariate_normal
 # 5:ff
 # 6:morris
 method_flag=1
-sample_number=1000
+sample_number=100
 upb_search=0.3
 lob_search=-0.3
 
@@ -58,8 +58,8 @@ analysis1.run()
 
 # uncertainty_analysis.uncertainty_analysis.plot_with_ellipse(test_freq[:,[0,2]])
 
-parm=uncertainty_analysis.uncertainty_analysis.random_parm_generator(mean=np.ones(5)*6.3e10,std=np.ones(5)*6.3e10*0.17,length=100)
-random_freq=uncertainty_analysis.uncertainty_analysis.random_freq_run(analysis1,parm,target='E',index=list(np.array([4,8,12,16,20])-1))
+parm=uncertainty_analysis.uncertainty_analysis.random_parm_generator(mean=np.array([1,1,1,1,1])*6.3e10,std=np.ones(5)*6.3e10*0.17,length=100)
+random_freq=uncertainty_analysis.uncertainty_analysis.random_freq_run(analysis1,parm,target='E',index=list(np.array([3,4,5,6,7])-1))
 np.savetxt('test_freq.csv',random_freq,delimiter=',')
 
 test_freq = np.loadtxt(open('test_freq.csv', 'rb'), delimiter=',', skiprows=0)
@@ -103,7 +103,6 @@ elif method_flag==6:
     parm=(param_values+1)*7e10
 
 
-
 ## Run model (example)
 FEM_freq = uncertainty_analysis.uncertainty_analysis.random_freq_run(analysis=analysis1, parm=parm, target='E',index=index)
 
@@ -113,18 +112,30 @@ FEM_freq = uncertainty_analysis.uncertainty_analysis.random_freq_run(analysis=an
 #Y=FEM_freq[:,0]
 
 ## Least square
-#mean_test_freq=np.mean(FEM_freq,axis=0)
+#mean_test_freq=np.mean(test_freq,axis=0)
 #Y=np.zeros(FEM_freq[:,0].shape)
 #for i in range(0,20):
 #    Y+=((FEM_freq[:,i]-mean_test_freq[i])/mean_test_freq[i])**2
 #Y=np.sqrt(Y)
+
+#mean_test_freq=np.mean(test_freq,axis=0)
+#Y=np.ones(FEM_freq[:,0].shape)
+#for i in range(0,17):
+#    rv = multivariate_normal(mean_test_freq[i], np.cov(test_freq[:,i]))
+#    y = rv.pdf(FEM_freq[:,i])
+#    Y+=y
+
 
 ## PCA projection
 #pca = PCA(n_components=1)
 #Y = pca.fit(FEM_freq).transform(FEM_freq)
 #Y = Y[:,0]
 
-## Propebility
+### Propebility
+# Multivariate_normal********************
+test_freq=test_freq[:,:17]
+FEM_freq=FEM_freq[:,:17]
+
 mean_test=np.mean(test_freq,axis=0)
 cov_test=np.cov(test_freq,rowvar=False)
 mean_FEM=np.mean(FEM_freq,axis=0)
@@ -132,15 +143,42 @@ cov_FEM=np.cov(FEM_freq,rowvar=False)
 
 test_freq_normalized=np.zeros(test_freq.shape)
 FEM_freq_normalized=np.zeros(FEM_freq.shape)
-for i in range(0,20):
-    test_freq_normalized[:,i]=(test_freq[:,i]-mean_test[i])/np.sqrt(cov_test[i,i])
-    FEM_freq_normalized[:,i]=(FEM_freq[:,i]-mean_test[i])/np.sqrt(cov_test[i,i])
+for i in range(0,17):
+    test_freq_normalized[:,i]=(test_freq[:,i]-mean_test[i])/mean_test[i]
+    FEM_freq_normalized[:,i]=(FEM_freq[:,i]-mean_test[i])/mean_test[i]
 
 mean_test_normalized=np.mean(test_freq_normalized,axis=0)
 cov_test_normalized=np.cov(test_freq_normalized,rowvar=False)
-    
-rv = multivariate_normal(mean_test_normalized, cov_test_normalized)
-Y = rv.logpdf(FEM_freq_normalized)
+
+rv = multivariate_normal(mean_test, cov_test)
+Y = rv.logpdf(FEM_freq)
+
+#for index,y in enumerate(Y):
+#    if y > -887:
+#        Y[index]=0
+#    else:
+#        Y[index]=1
+
+# KDE 
+#mean_test=np.mean(test_freq,axis=0)
+#cov_test=np.cov(test_freq,rowvar=False)
+#mean_FEM=np.mean(FEM_freq,axis=0)
+#cov_FEM=np.cov(FEM_freq,rowvar=False)
+#
+#test_freq=test_freq[:,:17]
+#FEM_freq=FEM_freq[:,:17]
+#
+#test_freq_normalized=np.zeros(test_freq.shape)
+#FEM_freq_normalized=np.zeros(FEM_freq.shape)
+#for i in range(0,17):
+#    test_freq_normalized[:,i]=(test_freq[:,i]-mean_test[i])/mean_test[i]
+#    FEM_freq_normalized[:,i]=(FEM_freq[:,i]-mean_test[i])/mean_test[i]
+#
+#mean_test_normalized=np.mean(test_freq_normalized,axis=0)
+#cov_test_normalized=np.cov(test_freq_normalized,rowvar=False)
+#
+#kernel = stats.gaussian_kde(test_freq_normalized.T)
+#Y=kernel.logpdf(FEM_freq_normalized.T)
 
 ## Log function
 #mean_test_freq=np.mean(test_freq,axis=0)
@@ -152,51 +190,87 @@ Y = rv.logpdf(FEM_freq_normalized)
 
 
 
+# Draw the scatter of Frequencies
 
-## Draw the scatter of Frequencies
-#g = sns.PairGrid(pd.DataFrame(FEM_freq[:,:5]))
-#g = g.map_diag(plt.hist)
-#g = g.map_offdiag(plt.scatter)
+#g = sns.PairGrid(pd.DataFrame(test_freq_normalized[:,:]), diag_sharey=False)
+#g.map_lower(sns.kdeplot, cmap="Blues_d")
+#g.map_upper(plt.scatter)
+#g.map_diag(sns.kdeplot, lw=3)
 #
 ## Perform analysis
 if method_flag==1:
     Si = sobol.analyze(problem, Y, print_to_console=False)
+    figure_keys={'ax1_title':'S1',
+                 'ax2_title':'S1_conf',
+                 'ax2_lable':'Parameter index',
+                 'ax3_title':'ST',
+                 'ax4_title':'ST_conf',
+                 'ax4_lable':'Parameter index',
+                 'ax5_parm':'S2',
+                 'ax5_title':'Second order sensitivity',
+                 'ax5_lable':'Parameter index',
+            }
 elif method_flag==2:
     Si = delta.analyze(problem, param_values, Y, num_resamples=10, conf_level=0.95, print_to_console=False)
+    figure_keys={'ax1_title':'S1',
+                 'ax2_title':'S1_conf',
+                 'ax2_lable':'Parameter index',
+                 'ax3_title':'delta',
+                 'ax4_title':'delta_conf',
+                 'ax4_lable':'Parameter index',
+            }
 elif method_flag==3:
     Si = dgsm.analyze(problem, param_values, Y, conf_level=0.95, print_to_console=False)
+    figure_keys={'ax1_title':'dgsm',
+                 'ax2_title':'dgsm_conf',
+                 'ax2_lable':'Parameter index',
+                 'ax3_title':'vi',
+                 'ax4_title':'vi_std',
+                 'ax4_lable':'Parameter index',
+            }
 elif method_flag==4:
     Si = fast.analyze(problem, Y, print_to_console=False)
+    figure_keys={'ax1_title':'S1',
+                 'ax2_title':'ST',
+                 'ax2_lable':'Parameter index',
+            }
 elif method_flag==5:
     Si = ff_analyze(problem, param_values, Y, second_order=True, print_to_console=False)
+    
 elif method_flag==6:
     Si = morris.analyze(problem, param_values, Y, conf_level=0.95, 
                     print_to_console=False,
                     num_levels=4, grid_jump=2, num_resamples=100)
-
+    figure_keys={'ax1_title':'mu',
+                 'ax2_title':'sigma',
+                 'ax2_lable':'Parameter index',
+                 'ax3_title':'mu_star',
+                 'ax4_title':'mu_star_conf',
+                 'ax4_lable':'Parameter index',
+            }
 
 
 # Plot the figure 
 f1,(ax1,ax2)=plt.subplots(2,1,sharex=True)
-sns.barplot(np.arange(1,22),Si['S1'],ax=ax1)
-sns.barplot(np.arange(1,22),Si['S1_conf'],ax=ax2)
-ax1.set_title('S1')
-ax2.set_title('S1_conf')
-ax2.set_xlabel('Parameter index')
+sns.barplot(np.arange(1,22),Si[figure_keys['ax1_title']],ax=ax1)
+sns.barplot(np.arange(1,22),Si[figure_keys['ax2_title']],ax=ax2)
+ax1.set_title(figure_keys['ax1_title'])
+ax2.set_title(figure_keys['ax2_title'])
+ax2.set_xlabel(figure_keys['ax2_lable'])
 
 f2,(ax3,ax4)=plt.subplots(2,1,sharex=True)
-sns.barplot(np.arange(1,22),Si['ST'],ax=ax3)
-sns.barplot(np.arange(1,22),Si['ST_conf'],ax=ax4)
-ax3.set_title('ST')
-ax4.set_title('ST_conf')
-ax4.set_xlabel('Parameter index')
+sns.barplot(np.arange(1,22),Si[figure_keys['ax3_title']],ax=ax3)
+sns.barplot(np.arange(1,22),Si[figure_keys['ax4_title']],ax=ax4)
+ax3.set_title(figure_keys['ax3_title'])
+ax4.set_title(figure_keys['ax4_title'])
+ax4.set_xlabel(figure_keys['ax4_lable'])
 
 f3=plt.figure()
 ax5=f3.add_axes()
-g_S2=sns.heatmap(Si['S2'],ax=ax5,xticklabels=np.arange(1,22), yticklabels=np.arange(1,22))
-g_S2.set_title('Second order sensitivity')
-g_S2.set_xlabel('Parameter index')
-g_S2.set_ylabel('Parameter index')
+g_S2=sns.heatmap(Si[figure_keys['ax5_parm']],ax=ax5,xticklabels=np.arange(1,22), yticklabels=np.arange(1,22))
+g_S2.set_title(figure_keys['ax5_title'])
+g_S2.set_xlabel(figure_keys['ax5_lable'])
+g_S2.set_ylabel(figure_keys['ax5_lable'])
 
 
 # Print the first-order sensitivity indices
