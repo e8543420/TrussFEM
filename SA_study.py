@@ -153,18 +153,29 @@ elif method_flag==7:
     param_values = saltelli.sample(problem, sample_number)
     parm=(param_values+1)*7e10    
 
-
+parm_FEM=parm
 ## Run model (example)
 FEM_freq = uncertainty_analysis.uncertainty_analysis.random_freq_run(analysis=analysis1, parm=parm, target='E',index=index)
 
 ## Statistical model
 
 ##Compare test data and FEM data
+#
 #fig, ax = plt.subplots()
-#ax.scatter(test_freq[:,3],test_freq[:,5],marker='o',label='Nominal test data')
-#ax.scatter(FEM_freq[:1000:10,3],FEM_freq[:1000:10,5],marker='x',label='Initial data')
+#ax.scatter(parm_test[:,1],parm_test[:,2],marker='o',label='Nominal test data')
+#ax.scatter(parm_FEM[:1000:10,1],parm_FEM[:1000:10,2],marker='x',label='Nominal data')
+#plt.xlabel('Parameter 3')
+#plt.ylabel('Parameter 5')
+#ax.legend()
+#
+#fig, ax = plt.subplots()
+#ax.scatter(test_freq[:,1],test_freq[:,2],marker='o',label='Nominal test data')
+#ax.scatter(FEM_freq[:1000:10,1],FEM_freq[:1000:10,2],marker='x',label='Nominal data')
+#plt.xlabel('1st modal frequency(Hz)')
+#plt.ylabel('2nd modal frequency(Hz)')
 #ax.legend()
 
+#%%
 
 ## Single frequency
 #Y=FEM_freq[:,0]
