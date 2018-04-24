@@ -62,11 +62,11 @@ analysis1.run()
 
 #%% Sampling for test data
 #Whole list are randomnized
-index=list(np.array([3,7,11,15,19])-1)
+index=list(np.array([6,7,8,9,10])-1)
 mean_test_parm=np.ones(21)*7e10
 mean_test_parm[index]=np.ones(5)*6.3e10
 
-std_test_parm=np.ones(21)*7e10*0.01
+std_test_parm=np.ones(21)*7e10*0.05
 std_test_parm[index]=np.ones(5)*7e10*0.17
 cov_test_parm=np.diag(std_test_parm**2)
 #cov_test_parm[2,6]=(7e10*0.17)**2
@@ -180,12 +180,14 @@ FEM_freq = uncertainty_analysis.uncertainty_analysis.random_freq_run(analysis=an
 ## Single frequency
 #Y=FEM_freq[:,0]
 
-## Least square
-#mean_test_freq=np.mean(test_freq,axis=0)
-#Y=np.zeros(FEM_freq[:,0].shape)
-#for i in range(0,20):
-#    Y+=((FEM_freq[:,i]-mean_test_freq[i])/mean_test_freq[i])**2
-#Y=np.sqrt(Y)
+# Least square
+mean_test_freq=np.mean(test_freq,axis=0)
+cov_test=np.cov(test_freq,rowvar=False)
+Y=np.zeros(FEM_freq[:,0].shape)
+for i in range(0,20):
+    Y+=((FEM_freq[:,i]-mean_test_freq[i])/mean_test_freq[i])**2
+#    Y+=((FEM_freq[:,i]-mean_test_freq[i])/cov_test[i,i])**2
+Y=np.sqrt(Y)
 
 #mean_test_freq=np.mean(test_freq,axis=0)
 #Y=np.ones(FEM_freq[:,0].shape)
@@ -204,48 +206,6 @@ FEM_freq = uncertainty_analysis.uncertainty_analysis.random_freq_run(analysis=an
 #Y=np.linalg.norm(FEM_freq_PCA - test_freq_PCA)
 
 
-### Propebility
-# Multivariate_normal********************
-
-order_invloved=20
-test_freq=test_freq[:,:order_invloved]
-FEM_freq=FEM_freq[:,:order_invloved]
-#init_freq=init_freq[:,:order_invloved]
-
-mean_test=np.mean(test_freq,axis=0)
-cov_test=np.cov(test_freq,rowvar=False)
-mean_FEM=np.mean(FEM_freq,axis=0)
-cov_FEM=np.cov(FEM_freq,rowvar=False)
-#mean_init=np.mean(init_freq,axis=0)
-#cov_init=np.cov(init_freq,rowvar=False)
-
-test_freq_normalized=np.zeros(test_freq.shape)
-FEM_freq_normalized=np.zeros(FEM_freq.shape)
-#init_freq_normalized=np.zeros(init_freq.shape)
-for i in range(0,order_invloved):
-    test_freq_normalized[:,i]=(test_freq[:,i])/mean_test[i]
-    FEM_freq_normalized[:,i]=(FEM_freq[:,i])/mean_test[i]
-#    init_freq_normalized[:,i]=(init_freq[:,i])/mean_test[i]
-
-mean_test_normalized=np.mean(test_freq_normalized,axis=0)
-cov_test_normalized=np.cov(test_freq_normalized,rowvar=False)
-mean_FEM_normalized=np.mean(FEM_freq_normalized,axis=0)
-cov_FEM_normalized=np.cov(FEM_freq_normalized,rowvar=False)
-#mean_init_normalized=np.mean(init_freq_normalized,axis=0)
-#cov_init_normalized=np.cov(init_freq_normalized,rowvar=False)
-
-rv = multivariate_normal(mean_FEM_normalized, cov_FEM_normalized)
-Y1 = rv.logpdf(FEM_freq_normalized)
-
-rv = multivariate_normal(mean_test_normalized, cov_test_normalized)
-Y2 = rv.logpdf(FEM_freq_normalized)
-
-#rv = multivariate_normal(mean_init_normalized, cov_init_normalized)
-#Y3 = rv.logpdf(FEM_freq_normalized)
-
-Y=Y2
-
-Y_con=Y1
 
 #list_parm=list()
 #for index,y in enumerate(Y):
@@ -376,7 +336,6 @@ elif method_flag==6:
                  'ax4_lable':'Parameter index',
             }
 elif method_flag==7:
-    Si_con = sobol.analyze(problem, Y_con, print_to_console=False)
     Si = sobol.analyze(problem, Y, print_to_console=False)
     figure_keys={'ax1_title':'S1',
                  'ax2_title':'S1_conf',
@@ -388,8 +347,8 @@ elif method_flag==7:
                  'ax5_title':'Second order sensitivity',
                  'ax5_lable':'Parameter index',
             }    
-    SST=(Si_con['ST'][1:])/Si['ST'][1:]
-    SS1=(Si_con['S1'][1:])/Si['S1'][1:]
+    SST=Si['ST'][1:]
+
     
 #    f1,(ax1,ax2)=plt.subplots(2,1,sharex=True)
 #    sns.barplot(np.arange(2,22),np.abs(SST),ax=ax1,color="gray")
@@ -402,29 +361,6 @@ elif method_flag==7:
     sns.barplot(np.arange(2,22),np.abs(SST),ax=ax1,color="gray")
     ax1.set_xlabel('Parameter number')    
     ax1.set_ylabel('Composite sensitivity indices') 
-
-# Plot the figure 
-f1,(ax1,ax2)=plt.subplots(2,1,sharex=True)
-sns.barplot(np.arange(1,22),Si[figure_keys['ax1_title']],ax=ax1)
-sns.barplot(np.arange(1,22),Si[figure_keys['ax2_title']],ax=ax2)
-ax1.set_title(figure_keys['ax1_title'])
-ax2.set_title(figure_keys['ax2_title'])
-ax2.set_xlabel(figure_keys['ax2_lable'])
-
-f2,(ax3,ax4)=plt.subplots(2,1,sharex=True)
-sns.barplot(np.arange(1,22),Si[figure_keys['ax3_title']],ax=ax3)
-sns.barplot(np.arange(1,22),Si[figure_keys['ax4_title']],ax=ax4)
-ax3.set_title(figure_keys['ax3_title'])
-ax4.set_title(figure_keys['ax4_title'])
-ax4.set_xlabel(figure_keys['ax4_lable'])
-
-f3=plt.figure()
-ax5=f3.add_axes()
-g_S2=sns.heatmap(Si[figure_keys['ax5_parm']],ax=ax5,xticklabels=np.arange(2,22), yticklabels=np.arange(1,21))
-g_S2.set_title(figure_keys['ax5_title'])
-g_S2.set_xlabel(figure_keys['ax5_lable'])
-g_S2.set_ylabel(figure_keys['ax5_lable'])
-
 
 # Print the first-order sensitivity indices
 #print(Si['S1'])
