@@ -41,7 +41,7 @@ from scipy import stats
 # 5:ff
 # 6:morris
 method_flag=7
-sample_number=1000
+sample_number=300
 upb_search=0.3
 lob_search=-0.3
 
@@ -185,9 +185,9 @@ mean_test_freq=np.mean(test_freq,axis=0)
 cov_test=np.cov(test_freq,rowvar=False)
 Y=np.zeros(FEM_freq[:,0].shape)
 for i in range(0,20):
-    Y+=((FEM_freq[:,i]-mean_test_freq[i])/mean_test_freq[i])**2
-#    Y+=((FEM_freq[:,i]-mean_test_freq[i])/cov_test[i,i])**2
-Y=np.sqrt(Y)
+#    Y+=((FEM_freq[:,i]-mean_test_freq[i])/mean_test_freq[i])**2
+    Y+=((FEM_freq[:,i]-mean_test_freq[i])/cov_test[i,i])**2
+Y=Y
 
 #mean_test_freq=np.mean(test_freq,axis=0)
 #Y=np.ones(FEM_freq[:,0].shape)
@@ -360,7 +360,7 @@ elif method_flag==7:
     f1,(ax1)=plt.subplots(1,1,sharex=True)
     sns.barplot(np.arange(2,22),np.abs(SST),ax=ax1,color="gray")
     ax1.set_xlabel('Parameter number')    
-    ax1.set_ylabel('Composite sensitivity indices') 
+    ax1.set_ylabel('Conventional sensitivity indices') 
 
 # Print the first-order sensitivity indices
 #print(Si['S1'])

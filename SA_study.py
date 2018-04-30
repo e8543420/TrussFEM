@@ -66,13 +66,13 @@ index=list(np.array([3,7,11,15,19])-1)
 mean_test_parm=np.ones(21)*7e10
 mean_test_parm[index]=np.ones(5)*6.3e10
 
-std_test_parm=np.ones(21)*7e10*0.01
+std_test_parm=np.ones(21)*7e10*0.05
 std_test_parm[index]=np.ones(5)*7e10*0.17
 cov_test_parm=np.diag(std_test_parm**2)
-#cov_test_parm[2,6]=(7e10*0.17)**2
-#cov_test_parm[6,2]=(7e10*0.17)**2
-#cov_test_parm[14,18]=-(7e10*0.13)**2
-#cov_test_parm[18,14]=-(7e10*0.13)**2
+cov_test_parm[2,6]=(7e10*0.17)**2
+cov_test_parm[6,2]=(7e10*0.17)**2
+cov_test_parm[14,18]=-(7e10*0.13)**2
+cov_test_parm[18,14]=-(7e10*0.13)**2
 
 
 parm=np.random.multivariate_normal(mean=mean_test_parm,cov=cov_test_parm,size=100)
@@ -151,7 +151,7 @@ elif method_flag==6:
     parm=(param_values+1)*7e10
 elif method_flag==7:
     param_values = saltelli.sample(problem, sample_number)
-    parm=(param_values+1)*7e10    
+    parm=(param_values+1)*7e10
 
 parm_FEM=parm
 ## Run model (example)
@@ -257,7 +257,7 @@ Y_con=Y1
 
 
 
-# KDE 
+# KDE
 #mean_test=np.mean(test_freq,axis=0)
 #cov_test=np.cov(test_freq,rowvar=False)
 #mean_FEM=np.mean(FEM_freq,axis=0)
@@ -324,8 +324,8 @@ elif method_flag==2:
     sns.barplot(np.arange(2,22),np.abs(SS2),ax=ax2)
     ax1.set_title('SS1')
     ax2.set_title('SDelta')
-    ax2.set_xlabel('Sensitivity')        
-    
+    ax2.set_xlabel('Sensitivity')
+
 elif method_flag==3:
     Si = dgsm.analyze(problem, param_values, Y, conf_level=0.95, print_to_console=False)
     figure_keys={'ax1_title':'dgsm',
@@ -343,8 +343,8 @@ elif method_flag==3:
     sns.barplot(np.arange(2,22),np.abs(SS2),ax=ax2)
     ax1.set_title('Sdgsm')
     ax2.set_title('Svi')
-    ax2.set_xlabel('Sensitivity')   
-    
+    ax2.set_xlabel('Sensitivity')
+
 elif method_flag==4:
     Si = fast.analyze(problem, Y, print_to_console=False)
     figure_keys={'ax1_title':'S1',
@@ -359,13 +359,13 @@ elif method_flag==4:
     sns.barplot(np.arange(2,22),np.abs(SS2),ax=ax2)
     ax1.set_title('SS1')
     ax2.set_title('SST')
-    ax2.set_xlabel('Sensitivity')   
+    ax2.set_xlabel('Sensitivity')
 
 elif method_flag==5:
     Si = ff_analyze(problem, param_values, Y, second_order=True, print_to_console=False)
-    
+
 elif method_flag==6:
-    Si = morris.analyze(problem, param_values, Y, conf_level=0.95, 
+    Si = morris.analyze(problem, param_values, Y, conf_level=0.95,
                     print_to_console=False,
                     num_levels=4, grid_jump=2, num_resamples=100)
     figure_keys={'ax1_title':'mu',
@@ -387,23 +387,23 @@ elif method_flag==7:
                  'ax5_parm':'S2',
                  'ax5_title':'Second order sensitivity',
                  'ax5_lable':'Parameter index',
-            }    
+            }
     SST=(Si_con['ST'][1:])/Si['ST'][1:]
     SS1=(Si_con['S1'][1:])/Si['S1'][1:]
-    
+
 #    f1,(ax1,ax2)=plt.subplots(2,1,sharex=True)
 #    sns.barplot(np.arange(2,22),np.abs(SST),ax=ax1,color="gray")
 #    sns.barplot(np.arange(2,22),np.abs(SS1),ax=ax2,color="gray")
 #    ax1.set_title('SST')
 #    ax2.set_title('SS1')
-#    ax2.set_xlabel('Sensitivity')    
-    
+#    ax2.set_xlabel('Sensitivity')
+
     f1,(ax1)=plt.subplots(1,1,sharex=True)
     sns.barplot(np.arange(2,22),np.abs(SST),ax=ax1,color="gray")
-    ax1.set_xlabel('Parameter number')    
-    ax1.set_ylabel('Composite sensitivity indices') 
+    ax1.set_xlabel('Parameter number')
+    ax1.set_ylabel('Composite sensitivity indices')
 
-# Plot the figure 
+# Plot the figure
 f1,(ax1,ax2)=plt.subplots(2,1,sharex=True)
 sns.barplot(np.arange(1,22),Si[figure_keys['ax1_title']],ax=ax1)
 sns.barplot(np.arange(1,22),Si[figure_keys['ax2_title']],ax=ax2)

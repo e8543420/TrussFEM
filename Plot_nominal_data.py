@@ -112,6 +112,7 @@ ax1.scatter(parm_FEM[:,2],parm_FEM[:,4],marker='x',label='Nominal data')
 ax1.scatter(parm_test[:,2],parm_test[:,4],marker='o',label='Test data')
 ax1.set_xlabel('Parameter 3')
 ax1.set_ylabel('Parameter 5')
+#ax1.axis('equal')
 ax1.legend()
 
 
@@ -119,6 +120,7 @@ ax2.scatter(FEM_freq[:,0],FEM_freq[:,1],marker='x',label='Nominal data')
 ax2.scatter(test_freq[:,0],test_freq[:,1],marker='o',label='Test data')
 ax2.set_xlabel('1st modal frequency(Hz)')
 ax2.set_ylabel('2nd modal frequency(Hz)')
+#ax2.axis('equal')
 ax2.legend()
 
 
